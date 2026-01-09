@@ -32,7 +32,7 @@ const idb = {
 
     getReport: async function(year, month, currency, customUrl = null) {
         // לוגיקת Fallback: אם אין URL מהגדרות, משתמשים בברירת המחדל שלך בגיטהאב
-        const defaultUrl = 'https://raw.githubusercontent.com/Username/Repo/main/rates.json';
+        const defaultUrl = 'https://raw.githubusercontent.com/AlonDlv/cost-manager/main/rates.json';
         const urlToFetch = customUrl || defaultUrl;
 
         try {

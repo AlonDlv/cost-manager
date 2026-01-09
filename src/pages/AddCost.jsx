@@ -58,7 +58,34 @@ export default function AddCost() {
 
     console.log("Submitting to IDB:", newCost); 
 
-    // --- TODO: Connect this to Partner 1's addCost(newCost) function later ---
+    const handleSubmit = async (e) => { // Make function async
+    e.preventDefault();
+
+    if (!formData.sum || !formData.description) {
+      setFeedback({ show: true, message: 'Please fill in all fields', severity: 'error' });
+      return;
+    }
+
+    const newCost = {
+      sum: Number(formData.sum),
+      currency: formData.currency,
+      category: formData.category,
+      description: formData.description,
+    };
+
+    try {
+      // CHANGE: Call idb.addCost
+      await idb.addCost(newCost); 
+      
+      setFormData({ sum: '', currency: 'ILS', category: 'Food', description: '' });
+      setFeedback({ show: true, message: 'Item added successfully! 🚀', severity: 'success' });
+    } catch (error) {
+      console.error(error);
+      setFeedback({ show: true, message: 'Error adding item', severity: 'error' });
+    }
+    
+    setTimeout(() => setFeedback(prev => ({ ...prev, show: false })), 3000);
+  };
     
     // 3. Reset Form & Show Success
     setFormData({ sum: '', currency: 'ILS', category: 'Food', description: '' });
