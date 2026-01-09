@@ -1,23 +1,50 @@
-import { PieChart as RePieChart, Pie, Tooltip, Legend } from "recharts";
+import React from 'react';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import { Pie } from 'react-chartjs-2';
 
-export default function PieChart({ data }) {
-    const chartData = Object.keys(data).map(key => ({
-        name: key,
-        value: data[key]
-    }));
+// ⚠️ CRITICAL: Register the components!
+ChartJS.register(ArcElement, Tooltip, Legend);
 
-    return (
-        <RePieChart width={400} height={400}>
-            <Pie
-                data={chartData}
-                dataKey="value"
-                nameKey="name"
-                cx="50%"
-                cy="50%"
-                outerRadius={120}
-            />
-            <Tooltip />
-            <Legend />
-        </RePieChart>
-    );
+export default function PieChart({ costs }) { // Exporting as DEFAULT
+  // Process data: Group costs by category
+  const categories = {};
+  
+  if (costs && costs.length > 0) {
+    costs.forEach(cost => {
+        // If categories[cost.category] exists, add to it, else start at 0
+        categories[cost.category] = (categories[cost.category] || 0) + cost.sum;
+    });
+  } else {
+     // Default dummy data if empty
+     categories['No Data'] = 1;
+  }
+
+  const data = {
+    labels: Object.keys(categories),
+    datasets: [
+      {
+        label: 'Expenses',
+        data: Object.values(categories),
+        backgroundColor: [
+          'rgba(255, 99, 132, 0.2)',
+          'rgba(54, 162, 235, 0.2)',
+          'rgba(255, 206, 86, 0.2)',
+          'rgba(75, 192, 192, 0.2)',
+          'rgba(153, 102, 255, 0.2)',
+          'rgba(255, 159, 64, 0.2)',
+        ],
+        borderColor: [
+          'rgba(255, 99, 132, 1)',
+          'rgba(54, 162, 235, 1)',
+          'rgba(255, 206, 86, 1)',
+          'rgba(75, 192, 192, 1)',
+          'rgba(153, 102, 255, 1)',
+          'rgba(255, 159, 64, 1)',
+        ],
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  return <Pie data={data} />;
 }
