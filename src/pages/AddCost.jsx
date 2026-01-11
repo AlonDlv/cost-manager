@@ -1,181 +1,109 @@
 import React, { useState } from 'react';
 import { 
-  Box, 
-  TextField, 
-  Button, 
-  Typography, 
-  Paper, 
-  MenuItem, 
-  Select, 
-  FormControl, 
-  InputLabel, 
-  Alert,
-  Stack 
+  Box, TextField, Button, Typography, Paper, 
+  MenuItem, Alert, Stack, InputAdornment 
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import DescriptionIcon from '@mui/icons-material/Description';
+import CategoryIcon from '@mui/icons-material/Category';
 import idb from '../idb-module';
 
 export default function AddCost() {
-  const [formData, setFormData] = useState({
-    sum: '',
-    currency: 'ILS', // Default to ILS
-    category: 'Food', // Default category
-    description: ''
-  });
-
+  const [formData, setFormData] = useState({ sum: '', currency: 'ILS', category: 'Food', description: '' });
   const [feedback, setFeedback] = useState({ show: false, message: '', severity: 'success' });
 
-  // Categories list (Expand as needed)
   const categories = ['Food', 'Health', 'Education', 'Travel', 'Housing', 'Other'];
-  
-  // Project Requirements: Supported Currencies
   const currencies = ['ILS', 'USD', 'EUR', 'GBP'];
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // 1. Basic Validation
     if (!formData.sum || !formData.description) {
       setFeedback({ show: true, message: 'Please fill in all fields', severity: 'error' });
       return;
     }
-
-    // 2. Prepare the object (Exactly what Partner 1's idb.js will need)
-    const newCost = {
-      sum: Number(formData.sum),
-      currency: formData.currency,
-      category: formData.category,
-      description: formData.description,
-      // Date is added automatically by the backend/idb, but you can verify that with Partner 1.
-    };
-
-    console.log("Submitting to IDB:", newCost); 
-
-    const handleSubmit = async (e) => { // Make function async
-    e.preventDefault();
-
-    if (!formData.sum || !formData.description) {
-      setFeedback({ show: true, message: 'Please fill in all fields', severity: 'error' });
-      return;
-    }
-
-    const newCost = {
-      sum: Number(formData.sum),
-      currency: formData.currency,
-      category: formData.category,
-      description: formData.description,
-    };
 
     try {
-      // CHANGE: Call idb.addCost
-      await idb.addCost(newCost); 
-      
+      await idb.addCost({
+        sum: Number(formData.sum),
+        currency: formData.currency,
+        category: formData.category,
+        description: formData.description,
+      });
       setFormData({ sum: '', currency: 'ILS', category: 'Food', description: '' });
-      setFeedback({ show: true, message: 'Item added successfully! 🚀', severity: 'success' });
+      setFeedback({ show: true, message: 'Expense saved! 🚀', severity: 'success' });
     } catch (error) {
-      console.error(error);
-      setFeedback({ show: true, message: 'Error adding item', severity: 'error' });
+      setFeedback({ show: true, message: 'Error saving data', severity: 'error' });
     }
-    
     setTimeout(() => setFeedback(prev => ({ ...prev, show: false })), 3000);
-  };
-    
-    // 3. Reset Form & Show Success
-    setFormData({ sum: '', currency: 'ILS', category: 'Food', description: '' });
-    setFeedback({ show: true, message: 'Item added successfully! 🚀', severity: 'success' });
-    
-    // Hide notification after 3 seconds
-    setTimeout(() => setFeedback({ ...feedback, show: false }), 3000);
   };
 
   return (
     <Box sx={{ maxWidth: 600, mx: 'auto', mt: 4 }}>
-      <Paper elevation={3} sx={{ p: 4 }}>
-        <Typography variant="h5" component="h2" gutterBottom>
-          Add New Cost Item
-        </Typography>
+      <Paper elevation={0} sx={{ overflow: 'hidden', border: '1px solid #e0e0e0', borderRadius: 3 }}>
+        <Box sx={{ bgcolor: '#263238', p: 3, color: 'white' }}>
+          <Typography variant="h5" fontWeight="700">Add New Cost</Typography>
+        </Box>
 
-        {feedback.show && (
-          <Alert severity={feedback.severity} sx={{ mb: 2 }}>
-            {feedback.message}
-          </Alert>
-        )}
-
-        <Box component="form" onSubmit={handleSubmit} noValidate>
+        <Box component="form" onSubmit={handleSubmit} sx={{ p: 4 }}>
+          {feedback.show && <Alert severity={feedback.severity} sx={{ mb: 3 }}>{feedback.message}</Alert>}
           <Stack spacing={3}>
-            
-            {/* Row 1: Sum and Currency */}
             <Stack direction="row" spacing={2}>
               <TextField
-                label="Sum"
+                label="Amount"
                 name="sum"
                 type="number"
+                fullWidth
                 value={formData.sum}
                 onChange={handleChange}
-                fullWidth
-                required
-                inputProps={{ min: "0", step: "0.01" }}
+                InputProps={{
+                  startAdornment: <InputAdornment position="start"><AttachMoneyIcon sx={{ color: '#2e7d32' }} /></InputAdornment>,
+                }}
               />
-              
-              <FormControl sx={{ minWidth: 100 }}>
-                <InputLabel>Currency</InputLabel>
-                <Select
-                  name="currency"
-                  value={formData.currency}
-                  label="Currency"
-                  onChange={handleChange}
-                >
-                  {currencies.map(curr => (
-                    <MenuItem key={curr} value={curr}>{curr}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+              <TextField select label="Currency" name="currency" value={formData.currency} onChange={handleChange} sx={{ minWidth: 100 }}>
+                {currencies.map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}
+              </TextField>
             </Stack>
 
-            {/* Row 2: Category */}
-            <FormControl fullWidth>
-              <InputLabel>Category</InputLabel>
-              <Select
-                name="category"
-                value={formData.category}
-                label="Category"
-                onChange={handleChange}
-              >
-                {categories.map(cat => (
-                  <MenuItem key={cat} value={cat}>{cat}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <TextField
+              select
+              fullWidth
+              label="Category"
+              name="category"
+              value={formData.category}
+              onChange={handleChange}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start" sx={{ mr: 2 }}>
+                    <CategoryIcon sx={{ color: '#2e7d32' }} />
+                  </InputAdornment>
+                ),
+              }}
+            >
+              {categories.map(cat => <MenuItem key={cat} value={cat}>{cat}</MenuItem>)}
+            </TextField>
 
-            {/* Row 3: Description */}
             <TextField
               label="Description"
               name="description"
-              value={formData.description}
-              onChange={handleChange}
               fullWidth
-              required
               multiline
               rows={2}
+              value={formData.description}
+              onChange={handleChange}
+              InputProps={{
+                startAdornment: <InputAdornment position="start" sx={{ alignSelf: 'flex-start', mt: 1 }}><DescriptionIcon sx={{ color: '#2e7d32' }} /></InputAdornment>,
+              }}
             />
 
-            <Button 
-              type="submit" 
-              variant="contained" 
-              size="large" 
-              endIcon={<SendIcon />}
-            >
-              Add Item
+            <Button type="submit" variant="contained" size="large" sx={{ bgcolor: '#2e7d32', py: 1.5, fontWeight: 700, '&:hover': { bgcolor: '#1b5e20' } }}>
+              Save Transaction
             </Button>
-
           </Stack>
         </Box>
       </Paper>

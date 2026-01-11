@@ -2,19 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { 
   Box, Paper, Typography, Table, TableBody, TableCell, 
   TableContainer, TableHead, TableRow, FormControl, 
-  InputLabel, Select, MenuItem, Stack, CircularProgress, Alert
+  InputLabel, Select, MenuItem, Stack, CircularProgress, 
+  Alert, TextField, InputAdornment 
 } from '@mui/material';
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import PaymentsIcon from '@mui/icons-material/Payments';
+import AssessmentIcon from '@mui/icons-material/Assessment';
 import idb from '../idb-module';
 
 export default function Reports() {
   const [year, setYear] = useState(new Date().getFullYear());
   const [month, setMonth] = useState(new Date().getMonth() + 1);
-  const [currency, setCurrency] = useState('ILS'); // Default currency
+  const [currency, setCurrency] = useState('ILS');
   const [reportData, setReportData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Generate lists for dropdowns
   const years = [2024, 2025, 2026];
   const months = Array.from({ length: 12 }, (_, i) => i + 1);
   const currencies = ['ILS', 'USD', 'EUR', 'GBP'];
@@ -26,17 +29,11 @@ export default function Reports() {
   const fetchReport = async () => {
     setLoading(true);
     setError('');
-    setReportData(null);
-
     try {
-      // 1. Get custom URL from settings (if exists)
       const customUrl = localStorage.getItem('exchangeRateUrl');
-
-      // 2. Call Partner 1's logic
       const result = await idb.getReport(year, month, currency, customUrl);
       setReportData(result);
     } catch (err) {
-      console.error(err);
       setError('Failed to load report. Please check your network or DB.');
     } finally {
       setLoading(false);
@@ -44,74 +41,99 @@ export default function Reports() {
   };
 
   return (
-    <Box>
-      <Typography variant="h4" gutterBottom>Monthly Report</Typography>
+    <Box sx={{ maxWidth: 1000, mx: 'auto' }}>
+      <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 3 }}>
+        <AssessmentIcon sx={{ color: '#263238', fontSize: 32 }} />
+        <Typography variant="h4" fontWeight="700" color="#263238">Monthly Report</Typography>
+      </Stack>
       
-      {/* Filters Toolbar */}
-      <Paper sx={{ p: 2, mb: 3 }}>
-        <Stack direction="row" spacing={2} alignItems="center">
-          <FormControl size="small" sx={{ minWidth: 100 }}>
-            <InputLabel>Year</InputLabel>
-            <Select value={year} label="Year" onChange={(e) => setYear(e.target.value)}>
-              {years.map(y => <MenuItem key={y} value={y}>{y}</MenuItem>)}
-            </Select>
-          </FormControl>
+      <Paper elevation={0} sx={{ p: 3, mb: 4, border: '1px solid #e0e0e0', borderRadius: 3 }}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3}>
+          <TextField
+            select
+            label="Year"
+            value={year}
+            onChange={(e) => setYear(e.target.value)}
+            sx={{ minWidth: 120 }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <CalendarTodayIcon fontSize="small" color="primary" />
+                </InputAdornment>
+              ),
+            }}
+          >
+            {years.map(y => <MenuItem key={y} value={y}>{y}</MenuItem>)}
+          </TextField>
 
-          <FormControl size="small" sx={{ minWidth: 100 }}>
-            <InputLabel>Month</InputLabel>
-            <Select value={month} label="Month" onChange={(e) => setMonth(e.target.value)}>
-              {months.map(m => <MenuItem key={m} value={m}>{m}</MenuItem>)}
-            </Select>
-          </FormControl>
+          <TextField
+            select
+            label="Month"
+            value={month}
+            onChange={(e) => setMonth(e.target.value)}
+            sx={{ minWidth: 120 }}
+          >
+            {months.map(m => (
+              <MenuItem key={m} value={m}>
+                {new Date(0, m - 1).toLocaleString('default', { month: 'long' })}
+              </MenuItem>
+            ))}
+          </TextField>
 
-          <FormControl size="small" sx={{ minWidth: 100 }}>
-            <InputLabel>Currency</InputLabel>
-            <Select value={currency} label="Currency" onChange={(e) => setCurrency(e.target.value)}>
-              {currencies.map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}
-            </Select>
-          </FormControl>
+          <TextField
+            select
+            label="Currency"
+            value={currency}
+            onChange={(e) => setCurrency(e.target.value)}
+            sx={{ minWidth: 150 }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <PaymentsIcon fontSize="small" color="primary" />
+                </InputAdornment>
+              ),
+            }}
+          >
+            {currencies.map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}
+          </TextField>
         </Stack>
       </Paper>
 
-      {/* Content Area */}
-      {loading && <CircularProgress />}
-      {error && <Alert severity="error">{error}</Alert>}
+      {loading && <CircularProgress sx={{ display: 'block', mx: 'auto', my: 4 }} />}
+      {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 
-      {reportData && (
+      {reportData && !loading && (
         <>
-           {/* Summary Box */}
-           <Paper sx={{ p: 2, mb: 2, bgcolor: '#e3f2fd' }}>
-             <Typography variant="h6">
-               Total: {reportData.total.total.toFixed(2)} {reportData.total.currency}
+           <Paper sx={{ p: 3, mb: 4, bgcolor: '#2e7d32', color: 'white', borderRadius: 3 }}>
+             <Typography variant="overline" sx={{ opacity: 0.8, fontWeight: 700 }}>Total Expenses</Typography>
+             <Typography variant="h3" fontWeight="800">
+               {reportData.total.total.toLocaleString()} {reportData.total.currency}
              </Typography>
            </Paper>
 
-           {/* Data Table */}
-           <TableContainer component={Paper}>
+           <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid #e0e0e0', borderRadius: 3 }}>
             <Table>
               <TableHead>
-                <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                  <TableCell>Day</TableCell>
-                  <TableCell>Category</TableCell>
-                  <TableCell>Description</TableCell>
-                  <TableCell align="right">Original Sum</TableCell>
-                  <TableCell>Orig. Currency</TableCell>
+                <TableRow sx={{ bgcolor: '#263238' }}>
+                  <TableCell sx={{ color: 'white', fontWeight: 700 }}>Day</TableCell>
+                  <TableCell sx={{ color: 'white', fontWeight: 700 }}>Category</TableCell>
+                  <TableCell sx={{ color: 'white', fontWeight: 700 }}>Description</TableCell>
+                  <TableCell align="right" sx={{ color: 'white', fontWeight: 700 }}>Amount</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {reportData.costs.length === 0 ? (
-                  <TableRow><TableCell colSpan={5} align="center">No costs found for this month</TableCell></TableRow>
-                ) : (
-                  reportData.costs.map((row, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{row.Date.day}</TableCell>
-                      <TableCell>{row.category}</TableCell>
-                      <TableCell>{row.description}</TableCell>
-                      <TableCell align="right">{row.sum}</TableCell>
-                      <TableCell>{row.currency}</TableCell>
-                    </TableRow>
-                  ))
-                )}
+                {reportData.costs.map((row, index) => (
+                  <TableRow key={index} sx={{ bgcolor: index % 2 === 0 ? 'white' : '#f9fbf9' }}>
+                    <TableCell>{row.Date.day}</TableCell>
+                    <TableCell>
+                       <Box sx={{ px: 1, py: 0.5, borderRadius: 1, bgcolor: '#e8f5e9', color: '#2e7d32', display: 'inline-block', fontWeight: 700, fontSize: '0.7rem' }}>
+                         {row.category}
+                       </Box>
+                    </TableCell>
+                    <TableCell>{row.description}</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 700 }}>{row.sum.toFixed(2)} {row.currency}</TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           </TableContainer>
