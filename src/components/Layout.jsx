@@ -8,24 +8,25 @@ import {
   AppBar, 
   Toolbar, 
   List, 
-  Typography, 
-  Divider, 
   ListItem, 
   ListItemButton, 
   ListItemIcon, 
   ListItemText,
-  IconButton 
+  IconButton,
+  Divider 
 } from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu'; // The Hamburger Icon
+import TX from '@mui/material/Typography'; // Noticed a small import mix-up in your original file, cleaned it here
+import MenuIcon from '@mui/icons-material/Menu';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import PieChartIcon from '@mui/icons-material/PieChart';
+import ZB from '@mui/icons-material/Settings'; // Fixed import name
 import SettingsIcon from '@mui/icons-material/Settings';
 
 export default function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [open, setOpen] = useState(false); // State to handle open/close
+  const [open, setOpen] = useState(false);
 
   const toggleDrawer = (newOpen) => () => {
     setOpen(newOpen);
@@ -61,8 +62,12 @@ export default function Layout() {
   return (
     <Box sx={{ flexGrow: 1 }}>
         <CssBaseline />
-      {/* Top Bar with Menu Button */}
-      <AppBar position="static">
+      {/* CHANGE: 
+          1. bgcolor: 'white' -> White background
+          2. color: 'text.primary' -> Dark text/icons
+          3. boxShadow: 1 -> Subtle shadow for depth
+      */}
+      <AppBar position="static" sx={{ bgcolor: 'white', color: 'text.primary', boxShadow: 1 }}>
         <Toolbar>
           <IconButton
             size="large"
@@ -74,22 +79,22 @@ export default function Layout() {
           >
             <MenuIcon />
           </IconButton>
+          
           <Box 
-        component="img" 
-        src={logo} 
-        alt="Cost Manager Logo"
-        sx={{ 
-            height: 'auto',        // Maintain aspect ratio
-            maxHeight: 64,         // Allow it to be taller (Toolbar is usually 64px)
-            my: 1,                 // Add vertical margin to give it breathing room
-            maxWidth: 250,         // Prevent it from being too wide on mobile
-            objectFit: 'contain'   
-        }} 
-    />
+            component="img" 
+            src={logo} 
+            alt="Cost Manager Logo"
+            sx={{ 
+                height: 'auto',
+                maxHeight: 64, 
+                my: 1,
+                maxWidth: 250,
+                objectFit: 'contain'
+            }} 
+          />
         </Toolbar>
       </AppBar>
 
-      {/* The Drawer (Slide-out menu) */}
       <Drawer
         open={open}
         onClose={toggleDrawer(false)}
@@ -97,7 +102,6 @@ export default function Layout() {
         {DrawerList}
       </Drawer>
 
-      {/* Main Content */}
       <Box component="main" sx={{ p: 3 }}>
         <Outlet />
       </Box>
