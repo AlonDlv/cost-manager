@@ -6,49 +6,56 @@ import {
 import DonutLargeIcon from '@mui/icons-material/DonutLarge';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import BarChartIcon from '@mui/icons-material/BarChart';
-import PieChart from '../charts/PieChart'; // Partner 2's component
-import BarChart from '../charts/BarChart'; // Partner 2's component
+import PieChart from '../charts/PieChart'; 
+import BarChart from '../charts/BarChart'; 
 import idb from '../idb-module'; 
 
 export default function Charts() {
   const [year, setYear] = useState(new Date().getFullYear());
   const [month, setMonth] = useState(new Date().getMonth() + 1);
-  const [reportData, setReportData] = useState(null);
+  const [reportData, setReportData] = useState(null); // נתונים לגרף עוגה (חודשי)
+  const [annualTotals, setAnnualTotals] = useState([]); // נתונים לגרף עמודות (שנתי)
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchFinancialData = async () => {
       setLoading(true);
       try {
-        // Fetching ILS data as a base for visualization
-        const result = await idb.getReport(year, month, 'ILS'); 
-        setReportData(result);
+        // ביצוע לולאה על 12 חודשים כדי לקבל נתונים לגרף העמודות (דרישה 4 במטלה)
+        const months = Array.from({ length: 12 }, (_, i) => i + 1);
+        const annualResults = await Promise.all(
+          months.map(m => idb.getReport(year, m, 'ILS'))
+        );
+        
+        // חילוץ סך כל ההוצאות מכל חודש
+        const totals = annualResults.map(r => r.total.total);
+        setAnnualTotals(totals); 
+        
+        // נתונים עבור גרף העוגה (החודש הספציפי שנבחר)
+        const currentMonthData = annualResults[month - 1];
+        setReportData(currentMonthData);
+
       } catch (error) {
-        console.error("Error fetching chart data:", error);
+        console.error("Error fetching annual chart data:", error);
       } finally {
         setLoading(false);
       }
     };
-    fetchData();
-  }, [year, month]);
+
+    fetchFinancialData();
+  }, [year, month]); // יתעדכן בכל פעם שהמשתמש משנה שנה או חודש
 
   return (
     <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
-      {/* Header with Brand Icon */}
       <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 3 }}>
         <DonutLargeIcon sx={{ color: '#263238', fontSize: 32 }} />
-        <Typography variant="h4" fontWeight="700" color="#263238">
-          Financial Analytics
-        </Typography>
+        <Typography variant="h4" fontWeight="700" color="#263238">Financial Analytics</Typography>
       </Stack>
       
-      {/* Modern Filter Toolbar */}
       <Paper elevation={0} sx={{ p: 3, mb: 4, border: '1px solid #e0e0e0', borderRadius: 3 }}>
         <Stack direction="row" spacing={3}>
           <TextField
-            select
-            label="Year"
-            value={year}
+            select label="Year" value={year}
             onChange={(e) => setYear(e.target.value)}
             sx={{ minWidth: 140 }}
             InputProps={{
@@ -59,17 +66,13 @@ export default function Charts() {
               ),
             }}
           >
-            <MenuItem value={2024}>2024</MenuItem>
-            <MenuItem value={2025}>2025</MenuItem>
-            <MenuItem value={2026}>2026</MenuItem>
+            {[2024, 2025, 2026].map(y => <MenuItem key={y} value={y}>{y}</MenuItem>)}
           </TextField>
 
           <TextField
-            select
-            label="Month"
-            value={month}
+            select label="Month (for Pie Chart)" value={month}
             onChange={(e) => setMonth(e.target.value)}
-            sx={{ minWidth: 160 }}
+            sx={{ minWidth: 200 }}
           >
              {Array.from({length: 12}, (_, i) => i + 1).map(m => (
                <MenuItem key={m} value={m}>
@@ -86,54 +89,27 @@ export default function Charts() {
         </Box>
       ) : (
         <Grid container spacing={4}>
-          {/* Pie Chart Card */}
           <Grid item xs={12} md={6}>
-            <Paper 
-              elevation={0} 
-              sx={{ 
-                p: 0, 
-                height: 480, 
-                overflow: 'hidden', 
-                border: '1px solid #e0e0e0', 
-                borderRadius: 3,
-                display: 'flex',
-                flexDirection: 'column'
-              }}
-            >
+            <Paper elevation={0} sx={{ p: 0, height: 480, overflow: 'hidden', border: '1px solid #e0e0e0', borderRadius: 3, display: 'flex', flexDirection: 'column' }}>
               <Box sx={{ bgcolor: '#263238', p: 2, color: 'white', display: 'flex', alignItems: 'center', gap: 1 }}>
                 <DonutLargeIcon fontSize="small" />
-                <Typography variant="subtitle1" fontWeight="700">Expenses by Category</Typography>
+                <Typography variant="subtitle1" fontWeight="700">Expenses by Category ({new Date(0, month - 1).toLocaleString('default', { month: 'long' })})</Typography>
               </Box>
               <Box sx={{ p: 3, flexGrow: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                {reportData?.costs?.length > 0 ? (
-                   <PieChart costs={reportData.costs} /> 
-                ) : (
-                  <Typography color="text.secondary">No data for this period</Typography>
-                )}
+                {reportData?.costs?.length > 0 ? <PieChart costs={reportData.costs} /> : <Typography color="text.secondary">No data for this month</Typography>}
               </Box>
             </Paper>
           </Grid>
 
-          {/* Bar Chart Card */}
           <Grid item xs={12} md={6}>
-            <Paper 
-              elevation={0} 
-              sx={{ 
-                p: 0, 
-                height: 480, 
-                overflow: 'hidden', 
-                border: '1px solid #e0e0e0', 
-                borderRadius: 3,
-                display: 'flex',
-                flexDirection: 'column'
-              }}
-            >
+            <Paper elevation={0} sx={{ p: 0, height: 480, overflow: 'hidden', border: '1px solid #e0e0e0', borderRadius: 3, display: 'flex', flexDirection: 'column' }}>
               <Box sx={{ bgcolor: '#263238', p: 2, color: 'white', display: 'flex', alignItems: 'center', gap: 1 }}>
                 <BarChartIcon fontSize="small" />
-                <Typography variant="subtitle1" fontWeight="700">Annual Trend</Typography>
+                <Typography variant="subtitle1" fontWeight="700">Annual Trend ({year})</Typography>
               </Box>
               <Box sx={{ p: 3, flexGrow: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                <BarChart year={year} /> 
+                {/* מעבירים את המערך של ה-12 חודשים לגרף העמודות */}
+                <BarChart year={year} chartData={annualTotals} /> 
               </Box>
             </Paper>
           </Grid>
